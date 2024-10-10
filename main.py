@@ -16,7 +16,6 @@ from forms import CreatePostForm, RegisterForm, loginForm, Commentform
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 ckeditor = CKEditor(app)
 Bootstrap5(app)
 
@@ -27,7 +26,7 @@ login_manager.init_app(app=app)
 # CREATE DATABASE
 class Base(DeclarativeBase):
     pass
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///my_posts.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DB_URL')
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
