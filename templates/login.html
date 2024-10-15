@@ -21,10 +21,19 @@ include "header.html" %}
 <main class="mb-4">
   <div class="container">
     <div class="row">
-      <!-- TODO: add a flash message here for users registering twice -->
-       {% if error %}
-       <p>{{ error }}</p>
-       {% endif %}
+      <!-- TODO: add a flash message here for users registering twice -->      
+       <!-- {% if error %}
+       <p class='flashes' style="position: center">{{ error }}</p>
+       {% endif %} -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages: %}
+      <div class="flash">
+      {% for category, message in messages %}
+       <p class="remove-flash">{{ message }}</p>
+      {% endfor %}
+   </div>
+{% endif %}
+{% endwith %}
       <div class="col-lg-8 col-md-10 mx-auto">
         <!--TODO: render login form here-->
         {{ render_form( form )}}
@@ -32,5 +41,11 @@ include "header.html" %}
     </div>
   </div>
 </main>
+<script>
+  setTimeout(function() {
+    document.querySelector('.remove-flash').style.display = 'none';
+  },5000);
+  
+</script>
 
 {% include "footer.html" %} {% endblock %}

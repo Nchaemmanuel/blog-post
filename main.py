@@ -10,6 +10,8 @@ from sqlalchemy import Integer, String, Text, ForeignKey
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import string
+from flask_wtf.csrf import CSRFProtect
 
 # Import your forms from the forms.py
 from forms import CreatePostForm, RegisterForm, loginForm, Commentform
@@ -19,6 +21,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
 ckeditor = CKEditor(app)
 Bootstrap5(app)
+csrf = CSRFProtect(app=app)
 
 # TODO: Configure Flask-Login
 login_manager = LoginManager()
@@ -95,12 +98,35 @@ def admin_only(func):
     @wraps(func)
     def decor(*args, **kwargs):
         if current_user != 1:
-            return abort(403)
+            return abort(403, 'You are not authorise to make a post')
+            # return flash(message='admin only', category='admin')
         else:
             return func(*args, **kwargs)
     return decor
         
-            
+
+# fucntion to check the valdiation of the password 
+# letters = string.ascii_uppercase
+# lets = str(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 
+#             'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'])
+# let =  str([x for x in letters])
+# lower_l = string.ascii_lowercase
+# l = str([x for x in lower_l])
+symb = string.punctuation
+s = [x for x in symb]
+def password_validation(password):
+    if len(password) < 8:
+        return flash('password must be more tha 8 character long')
+    elif not any(let.isupper() for let in str(password)):
+        return flash('Password must contain at least 1 uppercase letter')
+    elif not any(l.islower() for l in str(password)):
+        return flash(' Password must contain at least 1 lowercase letter ')
+    elif not any(x in s for x in str(password)):
+        return flash('Password must contain atleast 1 symbol')
+    else:
+        return password
+    
+  
         
 
 # TODO: Use Werkzeug to hash the user's password when creating a new user.
@@ -117,12 +143,15 @@ def register():
             flash(message=f'Email already exist please try and logIn with {email}', category='exist')
             return redirect(url_for('login'))
         else:
-            password = generate_password_hash(form.password.data, method='pbkdf2:sha256:60', salt_length=8)
-            add_user = User(name=name, email=email, password=password)
-            db.session.add(add_user)
-            db.session.commit()
-            login_user(add_user, remember=True)
-            return redirect(url_for('register'))
+            check_password = password_validation(form.confirm_password.data)
+            if check_password:            
+                password = generate_password_hash(check_password, method='pbkdf2:sha256:60', salt_length=8)
+                add_user = User(name=name, email=email, password=password)
+                db.session.add(add_user)
+                db.session.commit()
+                flash(message='successfully register welcome')
+                login_user(add_user, remember=True)
+                return redirect(url_for('get_all_posts'))
     return render_template('register.html', form=form, error=error, current_user=current_user)
     
 
@@ -186,7 +215,7 @@ def show_post(post_id):
 
 # TODO: Use a decorator so only an admin user can create a new post
 @app.route("/new-post", methods=["GET", "POST"])
-@login_required
+@admin_only
 def add_new_post():
     form = CreatePostForm()
     if form.validate_on_submit():

@@ -23,13 +23,36 @@ include "header.html" %}
     <div class="row">
       <div class="col-lg-8 col-md-10 mx-auto">
         <!--TODO: render your registration form here-->
-        {% if error %}
-         {{ error }}
-      {% endif %}
-        {{render_form(form)}}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages: %}
+        <div class="flash">
+        {% for category, message in messages %}
+         <p class="remove-flash">{{ message }}</p>
+        {% endfor %}
+     </div>
+  {% endif %}
+  {% endwith %}
+  <form action="{{url_for('register')}}" method="post" onsubmit="return preventScrollup();">
+    <div class="form-group">
+    {{form.hidden_tag()}}
+    {{form.name.label}} <br>{{form.name}} <br>
+    {{form.email.label}} <br>{{form.email}} <br>
+    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small> <br>
+    {{form.password.label}} <br>{{form.password}} <br>
+    {{form.confirm_password.label}} <br>{{form.confirm_password}}
+    {{form.submit}}
+    </div>
+  </form>
+        <!-- {{render_form(form)}} -->
       </div>
     </div>
   </div>
 </main>
+<script>
+  function preventScrollup(){
+    window.scrollTo(0, 0);
+
+  }
+</script>
 
 {% include "footer.html" %} {% endblock %}
